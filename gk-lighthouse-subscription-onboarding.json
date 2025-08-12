@@ -1,0 +1,74 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-08-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "managedByTenantId": {
+            "type": "string",
+            "metadata": {
+                "description": "Tenant ID provided by GK"
+            },
+            "defaultValue": "xxxx-xxxx-xxxx-xxxx-xxxx"
+        },
+        "OwnerPrincipalID": {
+            "type": "string",
+            "metadata": {
+                "description": "Object ID of Contributor Group provided by GK"
+            },
+            "defaultValue": "xxxx-xxxx-xxxx-xxxx-xxxx"
+        }
+    },
+    "variables": {
+        "mspOfferName": "glueckkanja Managed Services - Access privilege - v1.0",
+        "mspOfferDescription": "The solution will grant glueckkanja AG the required Azure RBAC roles for managing Microsoft Ressources in your environment.",
+        "mspRegistrationName": "[guid(variables('mspOfferName'))]",
+        "mspAssignmentName": "[guid(variables('mspOfferName'))]",
+        "authorizations": [
+            {
+                // Contributor on selected Subscription
+                "principalId": "[parameters('OwnerPrincipalID')]",
+                "roleDefinitionId": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+                "principalIdDisplayName": "wkpl_azlh_ms_Subscription Contributor"
+            },
+            {
+                // Managed Services Registration Assignment Delete Role 
+                "principalId": "[parameters('OwnerPrincipalID')]",
+                "roleDefinitionId": "91c1777a-f3dc-4fae-b103-61d183457e46",
+                "principalIdDisplayName": "wkpl_azlh_ms_Subscription Contributor"
+            }
+        ]
+    },
+    "resources": [
+        {
+            "type": "Microsoft.ManagedServices/registrationDefinitions",
+            "apiVersion": "2020-02-01-preview",
+            "name": "[variables('mspRegistrationName')]",
+            "properties": {
+                "registrationDefinitionName": "[variables('mspOfferName')]",
+                "description": "[variables('mspOfferDescription')]",
+                "managedByTenantId": "[parameters('managedByTenantId')]",
+                "authorizations": "[variables('authorizations')]"
+            }
+        },
+        {
+            "type": "Microsoft.ManagedServices/registrationAssignments",
+            "apiVersion": "2020-02-01-preview",
+            "name": "[variables('mspAssignmentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+            ],
+            "properties": {
+                "registrationDefinitionId": "[resourceId('Microsoft.ManagedServices/registrationDefinitions/', variables('mspRegistrationName'))]"
+            }
+        }
+    ],
+    "outputs": {
+        "mspOfferName": {
+            "type": "string",
+            "value": "[concat('Managed by', ' ', variables('mspOfferName'))]"
+        },
+        "authorizations": {
+            "type": "array",
+            "value": "[variables('authorizations')]"
+        }
+    }
+}
